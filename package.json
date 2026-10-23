@@ -1,0 +1,56 @@
+{
+  "name": "pi-modelctl",
+  "version": "0.1.0",
+  "description": "Pi extension for self-hosted models: finds the models on your inference servers, caps thinking with pi's own budgets, and sets compaction and the summary's thinking level per model.",
+  "type": "module",
+  "license": "MIT",
+  "author": "mkemalemdar",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mkemalemdar/pi-modelctl.git"
+  },
+  "homepage": "https://github.com/mkemalemdar/pi-modelctl#readme",
+  "bugs": {
+    "url": "https://github.com/mkemalemdar/pi-modelctl/issues"
+  },
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "llama.cpp",
+    "llama-swap",
+    "ollama",
+    "vllm",
+    "strata",
+    "local-llm",
+    "thinking-budget",
+    "compaction"
+  ],
+  "files": [
+    "src",
+    "docs",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test --experimental-strip-types test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=1.3.0 <2"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "1.4.0",
+    "@types/node": "^22.15.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
