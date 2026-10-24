@@ -1,6 +1,6 @@
 {
   "name": "pi-modelctl",
-  "version": "0.2.0",
+  "version": "0.1.1",
   "description": "Pi extension for self-hosted models: finds the models on your inference servers, caps thinking with pi's own budgets, and sets compaction and the summary's thinking level per model.",
   "type": "module",
   "license": "MIT",

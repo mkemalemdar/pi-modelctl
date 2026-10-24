@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — 2026-10-24
+## 0.1.1 — 2026-10-24
 
 - **Remove everything** in the menu's new DANGER section (also `/modelctl remove`), before uninstalling: deletes
   modelctl.json and modelctl's copies in npm's cache, and if you choose, the values the menu set in pi's settings
