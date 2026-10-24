@@ -4,7 +4,7 @@
 // Prints one line per check: PASS / FAIL / INFO.
 //
 // Point it at models on your servers:
-//   IT_LEVELS_MODEL  a llama-swap model with thinking levels (default qwen3.8-27b)
+//   IT_LEVELS_MODEL  a llama-swap model with thinking levels (default levels-model)
 //   IT_SMALL_MODEL   a llama-swap on/off model with a small context, ~20K (default small-model)
 //   IT_STRATA_MODEL  Strata's model (default big-model)
 //   IT_HIDDEN_MODEL  any other llama-swap model, hidden in the discovery check (default agent-model)
@@ -17,7 +17,7 @@ import { Pi } from "./rpc.mjs";
 const LS = { engine: "llama-swap", enabled: true, host: process.env.LS_HOST ?? "127.0.0.1", port: Number(process.env.LS_PORT ?? 11434), name: "llama-swap" };
 const ST = { engine: "strata", enabled: true, host: process.env.ST_HOST ?? "127.0.0.1", port: Number(process.env.ST_PORT ?? 8080), name: "strata" };
 const M = {
-  levels: process.env.IT_LEVELS_MODEL ?? "qwen3.8-27b",
+  levels: process.env.IT_LEVELS_MODEL ?? "levels-model",
   small: process.env.IT_SMALL_MODEL ?? "small-model",
   strata: process.env.IT_STRATA_MODEL ?? "big-model",
   hidden: process.env.IT_HIDDEN_MODEL ?? "agent-model",

@@ -8,7 +8,7 @@ import { strataAdapter } from "../src/adapters/strata.ts";
 import type { DiscoveredModel } from "../src/adapters/types.ts";
 
 const qwen38: DiscoveredModel = {
-  id: "qwen3.8-27b",
+  id: "levels-model",
   contextWindow: 81920,
   input: ["text", "image"],
   thinking: { kind: "levels", levels: ["low", "medium", "xhigh"], canTurnOff: true, preserveThinking: true },

@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.1.0 (unreleased)
+## 0.2.0
+
+- **Remove everything** in the menu's new DANGER section, before uninstalling: deletes modelctl.json, and if you
+  choose, the values the menu set in pi's settings (thinking budgets, compaction reserve and keep recent).
+- The type check and unit tests run on GitHub for every push, on Linux and macOS.
+
+## 0.1.0
 
 First release.
 

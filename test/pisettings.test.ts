@@ -1,10 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { budgetPath, compactionEnabled, compactionPath, compactionValue, readPath, thinkingBudget, writePath } from "../src/core/pisettings.ts";
-import { readPiSettings, writePiSetting } from "../src/pi/pi-settings.ts";
+import { budgetPath, compactionEnabled, menuValuePaths, compactionPath, compactionValue, readPath, thinkingBudget, writePath } from "../src/core/pisettings.ts";
+import { readPiSettings, resetMenuValues, writePiSetting } from "../src/pi/pi-settings.ts";
+import { removeEverything } from "../src/pi/remove.ts";
 
 test("writing one value keeps everything else; removing it removes emptied parents", () => {
   const before = { theme: "dark", compaction: { enabled: true } };
@@ -45,4 +46,37 @@ test("pi's settings file: a value is written into the file; a file that can't be
   writeFileSync(file, "{ broken");
   assert.match(writePiSetting(budgetPath("high"), 1, file)!, /nothing was changed/);
   assert.equal(readFileSync(file, "utf8"), "{ broken");
+});
+
+test("the menu's values in pi's settings: found (also per model) and reset; everything else stays", () => {
+  const dir = mkdtempSync(join(tmpdir(), "modelctl-reset-"));
+  const file = join(dir, "settings.json");
+  const other = { defaultModel: "x", compaction: { enabled: false, modelOverrides: { "a/b": { reserveTokens: 1, keepRecentTokens: 2, other: 3 }, "c/d": { reserveTokens: 4 } } } };
+  const mine = { thinkingBudgets: { low: 100, high: 200 }, compaction: { reserveTokens: 5 } };
+  const settings = { ...other, ...mine, compaction: { ...other.compaction, ...mine.compaction } };
+  assert.deepEqual(menuValuePaths(settings), [budgetPath("low"), budgetPath("high"), compactionPath("reserveTokens"), compactionPath("reserveTokens", "a/b"), compactionPath("keepRecentTokens", "a/b"), compactionPath("reserveTokens", "c/d")]);
+  writeFileSync(file, JSON.stringify(settings));
+  assert.deepEqual(resetMenuValues(file), { removed: 6 });
+  assert.deepEqual(JSON.parse(readFileSync(file, "utf8")), { defaultModel: "x", compaction: { enabled: false, modelOverrides: { "a/b": { other: 3 } } } });
+  assert.deepEqual(resetMenuValues(file), { removed: 0 }, "nothing left to reset");
+  writeFileSync(file, "{ broken");
+  assert.ok("error" in resetMenuValues(file));
+  assert.equal(readFileSync(file, "utf8"), "{ broken", "never overwritten");
+});
+
+test("Remove everything: modelctl.json and its half-written copies; pi's values only when asked", () => {
+  const dir = mkdtempSync(join(tmpdir(), "modelctl-remove-"));
+  const config = join(dir, "modelctl.json");
+  const pi = join(dir, "settings.json");
+  writeFileSync(config, "{}");
+  writeFileSync(`${config}.tmp-123`, "{");
+  writeFileSync(join(dir, "modelctl.json.bak"), "kept: not ours");
+  writeFileSync(pi, JSON.stringify({ thinkingBudgets: { low: 1 }, theme: "dark" }));
+  const lines = removeEverything(false, config, pi);
+  assert.deepEqual(lines, [`Removed ${config}`]);
+  assert.ok(!existsSync(config) && !existsSync(`${config}.tmp-123`));
+  assert.ok(existsSync(join(dir, "modelctl.json.bak")));
+  assert.deepEqual(JSON.parse(readFileSync(pi, "utf8")), { thinkingBudgets: { low: 1 }, theme: "dark" }, "pi's settings untouched");
+  assert.deepEqual(removeEverything(true, config, pi), [`${config} wasn't there`, `Reset 1 value in ${pi} to pi's defaults`]);
+  assert.deepEqual(JSON.parse(readFileSync(pi, "utf8")), { theme: "dark" });
 });

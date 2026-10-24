@@ -61,7 +61,7 @@ sends the budget for the current level, always keeping 1,024 tokens for the answ
 **Thinking budgets**. On a server without a budget field (Ollama, generic), thinking can't be capped; the model's
 page says so.
 
-Checked on llama.cpp (via llama-swap) with Qwen 3.8 27B: the budget stops the thinking, the model still answers,
+Checked on llama.cpp (via llama-swap) with a model that has thinking levels: the budget stops the thinking, the model still answers,
 and it overrides a `--reasoning-budget` set on the server.
 
 ### Compaction
@@ -102,6 +102,9 @@ where pi compacts. It can be switched off on the main page.
     [EXTENSION]
       Servers           2 on · 7 models
       Reload
+
+    [DANGER]
+      Remove everything…
 ```
 
 A model's page, here a 20K model with pi's defaults:
@@ -164,6 +167,22 @@ Thinking budgets, Reserve tokens and Keep recent are **pi's own settings**. The 
 
 An API key is sent as a Bearer token, exactly as typed. A value modelctl can't use is reported at startup and
 ignored; the file is only written when you change something in the menu.
+
+### Remove everything
+
+**[DANGER] › Remove everything…** in the menu, before uninstalling, offers two choices:
+
+- **Remove modelctl.json:** your servers and every per-model choice. pi's own settings stay as they are.
+- **Remove modelctl.json and reset pi's values set here:** also removes the thinking budgets and the compaction
+  reserve / keep recent (for all models and per model) from pi's `settings.json`, so pi uses its defaults again.
+  Everything else in that file stays. These values go even if you set them some other way.
+
+pi then reloads, and your servers' models leave its list. `pi uninstall` can't run the extension's code, so do this
+first:
+
+```bash
+pi uninstall npm:pi-modelctl
+```
 
 ## Development
 

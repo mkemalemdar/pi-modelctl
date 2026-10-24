@@ -9,6 +9,7 @@ import { SUMMARY_LEVEL_TEXT, thinkingText } from "../core/labels.ts";
 import { compactionValue, thinkingBudget } from "../core/pisettings.ts";
 import type { DiscoveryReport } from "./discovery.ts";
 import { readPiSettings, writePiSetting } from "./pi-settings.ts";
+import { removeEverything, UNINSTALL_HINT } from "./remove.ts";
 import { configPath, saveJson } from "./store.ts";
 import { showPanel } from "./ui/panel.ts";
 import type { Runtime } from "./runtime.ts";
@@ -52,6 +53,12 @@ export function registerCommand(pi: ExtensionAPI, rt: Runtime, deps: CommandDeps
       piSettings: { read: () => readPiSettings(), write: (path, value) => writePiSetting(path, value) },
     });
     if (result === "reload") await ctx.reload();
+    else if (result?.remove) {
+      const lines = removeEverything(result.resetPi);
+      say(ctx, `modelctl removed.\n${lines.join("\n")}\n${UNINSTALL_HINT}`, lines.some((l) => l.startsWith("⚠")) ? "warning" : "info");
+      // modelctl starts again with nothing set, so nothing of the old settings stays in pi.
+      await ctx.reload();
+    }
   }
 }
 

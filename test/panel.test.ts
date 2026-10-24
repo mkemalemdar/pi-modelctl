@@ -258,3 +258,24 @@ test("Status line switches on Enter; Esc closes; Reload closes with 'reload'", (
   q.open("Reload");
   assert.equal(q.result(), "reload");
 });
+
+test("DANGER › Remove everything: Cancel (the default) and Esc go back; each removal choice closes with it", () => {
+  const p = setup();
+  assert.match(p.screen(), /\[DANGER\]\n\s*Remove everything…/);
+  p.open("Remove everything…");
+  assert.match(p.screen(), /── modelctl › Remove everything ─/);
+  assert.match(p.screen(), /→ Cancel/, "Cancel is preselected");
+  p.press(KEY.enter);
+  assert.match(p.screen(), /── modelctl ─/);
+  p.open("Remove everything…");
+  p.press(KEY.esc);
+  assert.match(p.screen(), /── modelctl ─/);
+  assert.equal(p.result(), "open");
+  p.open("Remove everything…");
+  p.open("Remove modelctl.json");
+  assert.deepEqual(p.result(), { remove: true, resetPi: false });
+  const q = setup();
+  q.open("Remove everything…");
+  q.open("Remove modelctl.json and reset pi's values set here");
+  assert.deepEqual(q.result(), { remove: true, resetPi: true });
+});

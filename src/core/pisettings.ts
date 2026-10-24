@@ -66,6 +66,16 @@ export function writePath(settings: Obj, path: SettingPath, value: number | unde
   return root;
 }
 
+const COMPACTION_FIELDS: readonly CompactionField[] = ["reserveTokens", "keepRecentTokens"];
+
+/** Every value in `settings` that the modelctl menu edits: the budgets, and compaction for all models and per model. */
+export function menuValuePaths(settings: unknown): SettingPath[] {
+  const paths: SettingPath[] = [...BUDGET_LEVELS.map(budgetPath), ...COMPACTION_FIELDS.map((f) => compactionPath(f))];
+  const overrides = readPath(settings, ["compaction", "modelOverrides"]);
+  if (isObject(overrides)) for (const key of Object.keys(overrides)) paths.push(...COMPACTION_FIELDS.map((f) => compactionPath(f, key)));
+  return paths.filter((p) => readPath(settings, p) !== undefined);
+}
+
 /** A whole, non-negative token count as pi accepts it; anything else counts as not set. */
 export function tokenCount(v: unknown): number | undefined {
   return typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : undefined;

@@ -13,9 +13,9 @@ test("llama-swap (recorded): 6 models, context from capabilities, levels from me
   const models = parseLlamaSwapModels(fixture("llama-swap-v1-models.json"));
   const byId = Object.fromEntries(models.map((m) => [m.id, m]));
   assert.equal(models.length, 6);
-  assert.equal(byId["qwen3.8-27b"].contextWindow, 81920);
-  assert.equal(byId["qwen3.8-27b"].thinking.kind, "levels");
-  assert.deepEqual(byId["qwen3.8-27b"].thinking.levels, ["low", "medium", "xhigh"]);
+  assert.equal(byId["levels-model"].contextWindow, 81920);
+  assert.equal(byId["levels-model"].thinking.kind, "levels");
+  assert.deepEqual(byId["levels-model"].thinking.levels, ["low", "medium", "xhigh"]);
   assert.equal(byId["small-model"].thinking.kind, "onoff");
   assert.equal(byId["small-model"].contextWindow, 20480);
   assert.deepEqual(byId["small-model"].input, ["text", "image"]);

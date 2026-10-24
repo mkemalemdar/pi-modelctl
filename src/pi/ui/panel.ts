@@ -1,6 +1,6 @@
 // The /modelctl menu. Every row opens a page or a choice; Esc goes back one level.
 //
-//   modelctl                    START HERE (until a server is on), GENERAL SETTINGS, MODELS, EXTENSION
+//   modelctl                    START HERE (until a server is on), GENERAL SETTINGS, MODELS, EXTENSION, DANGER
 //   › Thinking budgets          pi's thinking budget per level
 //   › Compaction                the summary level for all models, pi's reserve and keep-recent for all models
 //   › Models › <model>          one model: hidden, context, thinking, and its compaction values
@@ -33,7 +33,8 @@ import type { DiscoveryReport } from "../discovery.ts";
 import type { Runtime } from "../runtime.ts";
 import { InputStep, ListMenu, type MenuItem, MenuStack } from "./components.ts";
 
-export type PanelResult = "reload" | undefined;
+/** "remove": Remove everything was confirmed; `resetPi` also resets pi's values the menu edits. */
+export type PanelResult = "reload" | { remove: true; resetPi: boolean } | undefined;
 
 export interface PanelHost {
   pi: ExtensionAPI;
@@ -190,6 +191,9 @@ export function showPanel(ctx: ExtensionCommandContext, host: PanelHost): Promis
         heading("extension", "EXTENSION"),
         { id: "servers", label: "Servers", indent: 1, detail: `${servers.filter((x) => x.enabled).length} on · ${plural(rt.catalog.size, "model")}`, description: "The inference servers modelctl asks for models. Only the ones switched on are contacted." },
         { id: "reload", label: "Reload", indent: 1, description: "pi's /reload: reads pi's settings again (budgets, reserve, keep recent) and asks the servers for their models again." },
+        space("danger"),
+        heading("danger", "DANGER"),
+        { id: "remove", label: "Remove everything…", indent: 1, description: "Before uninstalling: deletes modelctl.json, and if you choose, the values this menu set in pi's settings. Asks first." },
       ];
     };
     const main: ListMenu = new ListMenu(theme, {
@@ -210,9 +214,37 @@ export function showPanel(ctx: ExtensionCommandContext, host: PanelHost): Promis
         else if (item.id === "models") modelsPage();
         else if (item.id === "servers" || item.id === "start") serversPage();
         else if (item.id === "reload") finish("reload");
+        else if (item.id === "remove") removePage();
       },
     });
     open(main, () => main.setItems(mainItems()));
+
+    // ------------------------------------------------------------ remove everything
+
+    function removePage(): void {
+      const menu: ListMenu = new ListMenu(theme, {
+        title: "modelctl › Remove everything",
+        description:
+          "Deletes modelctl.json: your servers, hidden models, context sizes, thinking types and summary levels. pi then reloads, and your servers' models leave pi's list. Can't be undone.",
+        items: [
+          { id: "cancel", label: "Cancel" },
+          { id: "file", label: "Remove modelctl.json", description: "pi's own settings stay as they are." },
+          {
+            id: "all",
+            label: "Remove modelctl.json and reset pi's values set here",
+            description: "Also removes thinkingBudgets and compaction reserveTokens / keepRecentTokens (also per model) from pi's settings.json, so pi uses its defaults. Everything else in that file stays. These values are removed even if you set them some other way.",
+          },
+        ],
+        initialId: "cancel",
+        hint: "↑↓ move · Enter choose · Esc back",
+        onCancel: () => stack.pop(),
+        onSelect: (item) => {
+          if (item.id === "cancel") stack.pop();
+          else finish({ remove: true, resetPi: item.id === "all" });
+        },
+      });
+      open(menu);
+    }
 
     // ------------------------------------------------------------ thinking budgets (pi's)
 

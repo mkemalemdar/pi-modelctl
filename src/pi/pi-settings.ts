@@ -6,7 +6,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { isObject } from "../core/config.ts";
-import { writePath, type SettingPath } from "../core/pisettings.ts";
+import { menuValuePaths, writePath, type SettingPath } from "../core/pisettings.ts";
 import { saveJson } from "./store.ts";
 
 export function piSettingsPath(): string {
@@ -36,5 +36,22 @@ export function writePiSetting(path: SettingPath, value: number | undefined, fil
     return undefined;
   } catch (e) {
     return `could not write ${file}: ${(e as Error).message}`;
+  }
+}
+
+/**
+ * Removes every value the modelctl menu edits (back to pi's defaults) and keeps everything else in the file. Returns
+ * how many were removed, or the problem (a file that can't be read is never overwritten).
+ */
+export function resetMenuValues(file = piSettingsPath()): { removed: number } | { error: string } {
+  const current = readPiSettings(file);
+  if ("error" in current) return { error: `${current.error}; nothing was changed` };
+  const paths = menuValuePaths(current.settings);
+  if (paths.length === 0) return { removed: 0 };
+  try {
+    saveJson(file, paths.reduce((settings, path) => writePath(settings, path, undefined), current.settings));
+    return { removed: paths.length };
+  } catch (e) {
+    return { error: `could not write ${file}: ${(e as Error).message}` };
   }
 }
