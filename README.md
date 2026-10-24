@@ -61,7 +61,7 @@ sends the budget for the current level, always keeping 1,024 tokens for the answ
 **Thinking budgets**. On a server without a budget field (Ollama, generic), thinking can't be capped; the model's
 page says so.
 
-Checked on llama.cpp (via llama-swap) with a model that has thinking levels: the budget stops the thinking, the model still answers,
+Checked on llama.cpp (via llama-swap) with Qwen 3.8 27B, a model that thinks very long: the budget stops the thinking, the model still answers,
 and it overrides a `--reasoning-budget` set on the server.
 
 ### Compaction
@@ -140,12 +140,13 @@ Thinking budgets, Reserve tokens and Keep recent are **pi's own settings**. The 
 | `/modelctl` | the menu |
 | `/modelctl show` | the servers, and the values the current model uses and where each comes from |
 | `/modelctl reload` | pi's `/reload` |
+| `/modelctl remove` | Remove everything, without the menu (see [Uninstall](#uninstall)) |
 
 ## Files
 
 | File | What | Written |
 |---|---|---|
-| `~/.pi/agent/modelctl.json` | the servers, the summary level, the status line switch, per-model choices | when you change something in the menu |
+| `~/.pi/agent/modelctl.json` | the servers, the summary level, the status line switch, per-model choices; private (mode 600), since it can hold an API key | when you change something in the menu |
 | `~/.pi/agent/settings.json` (pi's) | only the values you change under Thinking budgets and Compaction | when you change one |
 
 ```json
@@ -168,21 +169,26 @@ Thinking budgets, Reserve tokens and Keep recent are **pi's own settings**. The 
 An API key is sent as a Bearer token, exactly as typed. A value modelctl can't use is reported at startup and
 ignored; the file is only written when you change something in the menu.
 
-### Remove everything
+## Uninstall
 
-**[DANGER] › Remove everything…** in the menu, before uninstalling, offers two choices:
+1. **Clean up from inside pi.** Close every other pi window that uses modelctl. Then open `/modelctl` →
+   **[DANGER] › Remove everything…** (or type `/modelctl remove`). It offers two choices:
+   - **Remove modelctl.json:** your servers and every per-model choice, and modelctl's copies in npm's download
+     cache. pi's own settings stay as they are.
+   - **Remove modelctl.json and reset pi's values set here:** also removes the thinking budgets and the compaction
+     reserve / keep recent (for all models and per model) from pi's `settings.json`, so pi uses its defaults again.
+     Everything else in that file stays. These values go even if you set them some other way.
 
-- **Remove modelctl.json:** your servers and every per-model choice. pi's own settings stay as they are.
-- **Remove modelctl.json and reset pi's values set here:** also removes the thinking budgets and the compaction
-  reserve / keep recent (for all models and per model) from pi's `settings.json`, so pi uses its defaults again.
-  Everything else in that file stays. These values go even if you set them some other way.
+   pi then reloads, your servers' models leave its list, and modelctl writes nothing more until you quit.
+2. **Quit pi and remove the code:**
+   ```bash
+   pi uninstall npm:pi-modelctl
+   ```
 
-pi then reloads, and your servers' models leave its list. `pi uninstall` can't run the extension's code, so do this
-first:
+### What isn't removed, on purpose
 
-```bash
-pi uninstall npm:pi-modelctl
-```
+- **pi's own settings** when you pick the first choice: they're pi's, not modelctl's.
+- **Your pi sessions:** chats keep the names of the models they used, as pi records them.
 
 ## Development
 

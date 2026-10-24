@@ -1,12 +1,15 @@
 # Changelog
 
-## 0.2.0
+## 0.2.0 — 2026-10-24
 
-- **Remove everything** in the menu's new DANGER section, before uninstalling: deletes modelctl.json, and if you
-  choose, the values the menu set in pi's settings (thinking budgets, compaction reserve and keep recent).
-- The type check and unit tests run on GitHub for every push, on Linux and macOS.
+- **Remove everything** in the menu's new DANGER section (also `/modelctl remove`), before uninstalling: deletes
+  modelctl.json and modelctl's copies in npm's cache, and if you choose, the values the menu set in pi's settings
+  (thinking budgets, compaction reserve and keep recent). Afterwards modelctl writes nothing more in that pi.
+- **modelctl.json is private** (only your user can read it, as it can hold an API key); an existing one is fixed the
+  next time pi starts. pi's own settings.json keeps the permissions it had when modelctl changes a value in it.
+- Development: the type check and unit tests run on GitHub for every push, on Linux and macOS.
 
-## 0.1.0
+## 0.1.0 — 2026-10-23
 
 First release.
 

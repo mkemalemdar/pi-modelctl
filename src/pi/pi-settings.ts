@@ -10,18 +10,18 @@ import { menuValuePaths, writePath, type SettingPath } from "../core/pisettings.
 import { saveJson } from "./store.ts";
 
 export function piSettingsPath(): string {
-  return join(getAgentDir(), "settings.json");
+	return join(getAgentDir(), "settings.json");
 }
 
 /** The settings in the file (what applies after the next /reload), or why they couldn't be read. */
 export function readPiSettings(path = piSettingsPath()): { settings: Record<string, unknown> } | { error: string } {
-  if (!existsSync(path)) return { settings: {} };
-  try {
-    const raw = JSON.parse(readFileSync(path, "utf8").replace(/^﻿/, ""));
-    return isObject(raw) ? { settings: raw } : { error: `${path} doesn't hold a JSON object` };
-  } catch (e) {
-    return { error: `could not read ${path}: ${(e as Error).message}` };
-  }
+	if (!existsSync(path)) return { settings: {} };
+	try {
+		const raw = JSON.parse(readFileSync(path, "utf8").replace(/^﻿/, ""));
+		return isObject(raw) ? { settings: raw } : { error: `${path} doesn't hold a JSON object` };
+	} catch (e) {
+		return { error: `could not read ${path}: ${(e as Error).message}` };
+	}
 }
 
 /**
@@ -29,14 +29,14 @@ export function readPiSettings(path = piSettingsPath()): { settings: Record<stri
  * can't be read is never overwritten. Returns a problem to show, or undefined.
  */
 export function writePiSetting(path: SettingPath, value: number | undefined, file = piSettingsPath()): string | undefined {
-  const current = readPiSettings(file);
-  if ("error" in current) return `${current.error}; nothing was changed`;
-  try {
-    saveJson(file, writePath(current.settings, path, value));
-    return undefined;
-  } catch (e) {
-    return `could not write ${file}: ${(e as Error).message}`;
-  }
+	const current = readPiSettings(file);
+	if ("error" in current) return `${current.error}; nothing was changed`;
+	try {
+		saveJson(file, writePath(current.settings, path, value));
+		return undefined;
+	} catch (e) {
+		return `could not write ${file}: ${(e as Error).message}`;
+	}
 }
 
 /**
@@ -44,14 +44,14 @@ export function writePiSetting(path: SettingPath, value: number | undefined, fil
  * how many were removed, or the problem (a file that can't be read is never overwritten).
  */
 export function resetMenuValues(file = piSettingsPath()): { removed: number } | { error: string } {
-  const current = readPiSettings(file);
-  if ("error" in current) return { error: `${current.error}; nothing was changed` };
-  const paths = menuValuePaths(current.settings);
-  if (paths.length === 0) return { removed: 0 };
-  try {
-    saveJson(file, paths.reduce((settings, path) => writePath(settings, path, undefined), current.settings));
-    return { removed: paths.length };
-  } catch (e) {
-    return { error: `could not write ${file}: ${(e as Error).message}` };
-  }
+	const current = readPiSettings(file);
+	if ("error" in current) return { error: `${current.error}; nothing was changed` };
+	const paths = menuValuePaths(current.settings);
+	if (paths.length === 0) return { removed: 0 };
+	try {
+		saveJson(file, paths.reduce((settings, path) => writePath(settings, path, undefined), current.settings));
+		return { removed: paths.length };
+	} catch (e) {
+		return { error: `could not write ${file}: ${(e as Error).message}` };
+	}
 }

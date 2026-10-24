@@ -10,16 +10,16 @@ import { vllmAdapter } from "./vllm.ts";
 import type { EngineAdapter } from "./types.ts";
 
 const ADAPTERS: Record<AdapterId, EngineAdapter> = {
-  "llama-swap": llamaSwapAdapter,
-  "llama-server": llamaServerAdapter,
-  strata: strataAdapter,
-  ollama: ollamaAdapter,
-  vllm: vllmAdapter,
-  openai: openaiAdapter,
+	"llama-swap": llamaSwapAdapter,
+	"llama-server": llamaServerAdapter,
+	strata: strataAdapter,
+	ollama: ollamaAdapter,
+	vllm: vllmAdapter,
+	openai: openaiAdapter,
 };
 
 export function adapterFor(engine: EngineId): EngineAdapter {
-  return ADAPTERS[engineInfo(engine).adapter];
+	return ADAPTERS[engineInfo(engine).adapter];
 }
 
 export type { DiscoveredModel, EngineAdapter, FetchJson } from "./types.ts";

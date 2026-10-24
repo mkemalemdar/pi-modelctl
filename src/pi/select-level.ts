@@ -6,12 +6,12 @@ import { clampLevel } from "../core/levels.ts";
 import type { Runtime } from "./runtime.ts";
 
 export function registerLevelOnSelect(pi: ExtensionAPI, rt: Runtime): void {
-  pi.on("model_select", (event) => {
-    if (event.source === "restore") return;
-    const entry = rt.entryFor(event.model);
-    const wanted = entry ? rt.config.models[entry.key]?.levelOnSelect : undefined;
-    if (!entry || !wanted) return;
-    const level = clampLevel(entry.thinking, wanted);
-    if (level && level !== pi.getThinkingLevel()) pi.setThinkingLevel(level);
-  });
+	pi.on("model_select", (event) => {
+		if (event.source === "restore") return;
+		const entry = rt.entryFor(event.model);
+		const wanted = entry ? rt.config.models[entry.key]?.levelOnSelect : undefined;
+		if (!entry || !wanted) return;
+		const level = clampLevel(entry.thinking, wanted);
+		if (level && level !== pi.getThinkingLevel()) pi.setThinkingLevel(level);
+	});
 }
