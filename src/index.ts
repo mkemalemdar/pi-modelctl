@@ -11,16 +11,18 @@ import { runDiscovery } from "./pi/discovery.ts";
 import { Runtime } from "./pi/runtime.ts";
 import { registerLevelOnSelect } from "./pi/select-level.ts";
 import { registerStatus } from "./pi/status.ts";
-import { loadConfig } from "./pi/store.ts";
+import { loadConfig, moveOldConfig } from "./pi/store.ts";
 
 export default async function modelctl(pi: ExtensionAPI): Promise<void> {
+	// Before 0.1.2 modelctl.json lived loose in pi's agent folder.
+	const moveProblem = moveOldConfig();
 	const loaded = loadConfig();
 	const rt = new Runtime(loaded.config, loaded.warnings);
 
 	// Providers must exist before pi picks its startup model, so discovery runs in the (awaited) factory.
 	// Servers are asked in parallel with a short timeout.
 	const report = await runDiscovery(pi, rt);
-	const notes = [...loaded.warnings, ...report.warnings, ...report.servers.filter((s) => s.error).map((s) => `${s.name} (${s.origin}) isn't answering: ${s.error}`)];
+	const notes = [...(moveProblem ? [moveProblem] : []), ...loaded.warnings, ...report.warnings, ...report.servers.filter((s) => s.error).map((s) => `${s.name} (${s.origin}) isn't answering: ${s.error}`)];
 
 	registerSummaryLevel(pi, rt);
 	registerLevelOnSelect(pi, rt);

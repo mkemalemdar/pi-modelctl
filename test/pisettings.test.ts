@@ -1,12 +1,12 @@
 // pi's own settings.json: reading and writing one value, the values pi applies, and resetting the menu's ones.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { budgetPath, compactionEnabled, menuValuePaths, compactionPath, compactionValue, readPath, thinkingBudget, writePath } from "../src/core/pisettings.ts";
 import { readPiSettings, resetMenuValues, writePiSetting } from "../src/pi/pi-settings.ts";
-import { removeConfigFiles } from "../src/pi/remove.ts";
+import { removeFiles } from "../src/pi/remove.ts";
 
 test("writing one value keeps everything else; removing it removes emptied parents", () => {
 	const before = { theme: "dark", compaction: { enabled: true } };
@@ -67,15 +67,20 @@ test("the menu's values in pi's settings: found (also per model) and reset; ever
 	assert.equal(readFileSync(file, "utf8"), "{ broken", "never overwritten");
 });
 
-test("Remove everything's file part: modelctl.json and its half-written copies, nothing else in the folder", (t) => {
-	const dir = mkdtempSync(join(tmpdir(), "modelctl-remove-"));
-	t.after(() => rmSync(dir, { recursive: true, force: true }));
-	const config = join(dir, "modelctl.json");
-	writeFileSync(config, "{}");
-	writeFileSync(`${config}.tmp-123`, "{");
-	writeFileSync(join(dir, "modelctl.json.bak"), "kept: not ours");
-	assert.deepEqual(removeConfigFiles(config), [`✓ Deleted ${config}.`]);
-	assert.ok(!existsSync(config) && !existsSync(`${config}.tmp-123`));
-	assert.ok(existsSync(join(dir, "modelctl.json.bak")));
-	assert.deepEqual(removeConfigFiles(config), [`✓ ${config} wasn't there.`]);
+test("Remove everything's file part: modelctl's folder and an old loose modelctl.json; nothing else in pi's folder", (t) => {
+	const agent = mkdtempSync(join(tmpdir(), "modelctl-remove-"));
+	t.after(() => rmSync(agent, { recursive: true, force: true }));
+	const dir = join(agent, "pi-modelctl");
+	const old = join(agent, "modelctl.json");
+	mkdirSync(dir);
+	writeFileSync(join(dir, "modelctl.json"), "{}");
+	writeFileSync(join(dir, "debug.log"), "log");
+	writeFileSync(old, "{}");
+	writeFileSync(`${old}.tmp-123`, "{");
+	writeFileSync(join(agent, "modelctl.json.bak"), "kept: not ours");
+	writeFileSync(join(agent, "settings.json"), "{}");
+	assert.deepEqual(removeFiles(dir, old), [`✓ Deleted ${dir} (modelctl.json and the debug log).`, `✓ Deleted the old ${old}.`]);
+	assert.ok(!existsSync(dir) && !existsSync(old) && !existsSync(`${old}.tmp-123`));
+	assert.ok(existsSync(join(agent, "modelctl.json.bak")) && existsSync(join(agent, "settings.json")), "pi's folder keeps everything else");
+	assert.deepEqual(removeFiles(dir, old), [`✓ ${dir} wasn't there.`]);
 });

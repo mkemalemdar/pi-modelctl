@@ -30,19 +30,20 @@ test("files: modelctl.json is private (also an older, readable one); pi's settin
 });
 
 test("Remove everything: modelctl.json, npm's cache, pi's values when asked; then nothing is written again", async (t) => {
-	const dir = mkdtempSync(join(tmpdir(), "modelctl-remove-"));
-	t.after(() => rmSync(dir, { recursive: true, force: true }));
+	const agent = mkdtempSync(join(tmpdir(), "modelctl-remove-"));
+	t.after(() => rmSync(agent, { recursive: true, force: true }));
+	const dir = join(agent, "pi-modelctl");
 	const config = join(dir, "modelctl.json");
-	const pi = join(dir, "settings.json");
-	writeFileSync(config, "{}");
+	const pi = join(agent, "settings.json");
+	saveJson(config, { version: 1 }, 0o600);
 	writeFileSync(pi, JSON.stringify({ thinkingBudgets: { low: 1 }, theme: "dark" }));
 	let cacheCleaned = 0;
-	const lines = await removeEverything(true, { config, piSettings: pi, npmCache: async () => ++cacheCleaned && 4 });
-	assert.deepEqual(lines, [`✓ Deleted ${config}.`, `✓ Reset 1 value in ${pi} to pi's defaults.`, "✓ Removed 4 cached downloads from npm's cache."]);
+	const lines = await removeEverything(true, { dir, oldConfig: join(agent, "modelctl.json"), piSettings: pi, npmCache: async () => ++cacheCleaned && 4 });
+	assert.deepEqual(lines, [`✓ Deleted ${dir} (modelctl.json and the debug log).`, `✓ Reset 1 value in ${pi} to pi's defaults.`, "✓ Removed 4 cached downloads from npm's cache."]);
 	assert.equal(cacheCleaned, 1);
 	assert.deepEqual(JSON.parse(readFileSync(pi, "utf8")), { theme: "dark" }, "only the menu's values left pi's settings");
 	assert.ok(isRemoved());
 	saveJson(config, { version: 1 }, 0o600);
 	assert.ok(!existsSync(config), "nothing is written again in this process");
-	assert.match((await removeEverything(false, { config, piSettings: pi, npmCache: async () => 0 })).join("\n"), /already removed/);
+	assert.match((await removeEverything(false, { dir, piSettings: pi, npmCache: async () => 0 })).join("\n"), /already removed/);
 });

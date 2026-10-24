@@ -1,9 +1,11 @@
 // Integration checks against real servers (llama-swap on :11434, Strata on :8080 by default) and a real pi.
-// Each scenario gets its own throwaway pi agent dir with its own modelctl.json and pi settings.json.
+// Each scenario gets its own throwaway pi agent dir with its own pi-modelctl/modelctl.json and pi settings.json.
 // Usage: node test/integration/run.mjs [scenario ...]    (no args = all, in an order that keeps model loads low)
 // Prints one line per check: PASS / FAIL / INFO.
 //
-// Point it at models on your servers:
+// Point it at your servers and models, in the environment or in test/integration/.env (git ignores it; the environment
+// wins). See docs/TESTING.md.
+//   LS_HOST / LS_PORT  llama-swap (default 127.0.0.1:11434); ST_HOST / ST_PORT  Strata (default 127.0.0.1:8080)
 //   IT_LEVELS_MODEL  a llama-swap model with thinking levels (default qwen3.8-27b)
 //   IT_SMALL_MODEL   a llama-swap on/off model with a small context, ~20K (default small-model)
 //   IT_STRATA_MODEL  Strata's model (default big-model)
@@ -13,6 +15,9 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Pi } from "./rpc.mjs";
+
+const envFile = new URL("./.env", import.meta.url).pathname;
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const LS = { engine: "llama-swap", enabled: true, host: process.env.LS_HOST ?? "127.0.0.1", port: Number(process.env.LS_PORT ?? 11434), name: "llama-swap" };
 const ST = { engine: "strata", enabled: true, host: process.env.ST_HOST ?? "127.0.0.1", port: Number(process.env.ST_PORT ?? 8080), name: "strata" };
@@ -35,7 +40,8 @@ async function session({ config = {}, piSettings } = {}, fn) {
 	const dir = mkdtempSync(join(tmpdir(), "modelctl-it-"));
 	const src = process.env.PI_CODING_AGENT_DIR;
 	if (src && existsSync(join(src, "auth.json"))) cpSync(join(src, "auth.json"), join(dir, "auth.json"));
-	writeFileSync(join(dir, "modelctl.json"), JSON.stringify({ version: 1, engines: [LS, ST], ...config }, null, 2));
+	mkdirSync(join(dir, "pi-modelctl"), { mode: 0o700 });
+	writeFileSync(join(dir, "pi-modelctl", "modelctl.json"), JSON.stringify({ version: 1, engines: [LS, ST], ...config }, null, 2), { mode: 0o600 });
 	if (piSettings) writeFileSync(join(dir, "settings.json"), JSON.stringify(piSettings, null, 2));
 	// The model has tools: give it a scratch working folder, never the repo.
 	const work = join(dir, "work");

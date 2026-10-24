@@ -13,6 +13,15 @@ takes a decision away from pi. It:
 - switches to a model's own **thinking level when you select it**, and shows a **status line**
   (`ctx 41K/81.9K · think ≤8.2K · compacts at 65.5K`).
 
+> 🤖 **AI agent installing or removing this for someone?** Read [AGENT_INSTALL.md](AGENT_INSTALL.md) first: what to
+> check and ask, how to write the settings, how to uninstall without leaving anything behind, and what never to touch.
+
+## Requirements
+
+- pi 1.3 or newer.
+- A model server pi can reach: llama-swap, llama.cpp's `llama-server`, Strata, Ollama, vLLM, or any
+  OpenAI-compatible server, on this computer or another one.
+
 ## Install
 
 ```bash
@@ -146,7 +155,8 @@ Thinking budgets, Reserve tokens and Keep recent are **pi's own settings**. The 
 
 | File | What | Written |
 |---|---|---|
-| `~/.pi/agent/modelctl.json` | the servers, the summary level, the status line switch, per-model choices; private (mode 600), since it can hold an API key | when you change something in the menu |
+| `~/.pi/agent/pi-modelctl/modelctl.json` | the servers, the summary level, the status line switch, per-model choices; private (mode 600), since it can hold an API key | when you change something in the menu |
+| `~/.pi/agent/pi-modelctl/debug.log` | only with `PI_MODELCTL_DEBUG=1` (see [Troubleshooting](#troubleshooting)) | while it's on |
 | `~/.pi/agent/settings.json` (pi's) | only the values you change under Thinking budgets and Compaction | when you change one |
 
 ```json
@@ -167,14 +177,15 @@ Thinking budgets, Reserve tokens and Keep recent are **pi's own settings**. The 
 ```
 
 An API key is sent as a Bearer token, exactly as typed. A value modelctl can't use is reported at startup and
-ignored; the file is only written when you change something in the menu.
+ignored; the file is only written when you change something in the menu. Before 0.1.2, modelctl.json lived in
+`~/.pi/agent/` itself; it's moved into the folder by itself the next time pi starts.
 
 ## Uninstall
 
 1. **Clean up from inside pi.** Close every other pi window that uses modelctl. Then open `/modelctl` →
    **[DANGER] › Remove everything…** (or type `/modelctl remove`). It offers two choices:
-   - **Remove modelctl.json:** your servers and every per-model choice, and modelctl's copies in npm's download
-     cache. pi's own settings stay as they are.
+   - **Remove modelctl.json:** modelctl's folder (your servers and every per-model choice, and the debug log), and
+     modelctl's copies in npm's download cache. pi's own settings stay as they are.
    - **Remove modelctl.json and reset pi's values set here:** also removes the thinking budgets and the compaction
      reserve / keep recent (for all models and per model) from pi's `settings.json`, so pi uses its defaults again.
      Everything else in that file stays. These values go even if you set them some other way.
@@ -189,6 +200,25 @@ ignored; the file is only written when you change something in the menu.
 
 - **pi's own settings** when you pick the first choice: they're pi's, not modelctl's.
 - **Your pi sessions:** chats keep the names of the models they used, as pi records them.
+
+## Troubleshooting
+
+- **"<server> isn't answering":** the server is off, or Host or Port are wrong: `/modelctl` → Servers → the server's
+  row. A server that doesn't answer has no models in pi until it does.
+- **A model is missing from `/model`:** its server didn't say how big its context is (Ollama only says it for a loaded
+  model). Open `/modelctl` → All models → the model, and set **Context size**.
+- **A budget or compaction value didn't change anything:** those are pi's own settings, applied after **Reload**.
+- **"… is from an older modelctl and isn't used":** both the old `~/.pi/agent/modelctl.json` and the one in
+  `~/.pi/agent/pi-modelctl/` exist; the one in the folder is used. Delete the old one.
+- **More detail:** start pi with `PI_MODELCTL_DEBUG=1 pi`. It writes `~/.pi/agent/pi-modelctl/debug.log`: each server
+  asked (its address, the answer and how long it took), the files written and pi's values changed. Never API keys.
+
+## Limits
+
+- pi applies its own settings (budgets, reserve, keep recent) after `/reload`, not instantly.
+- Thinking budgets are per level and the same for every model; that's how pi's setting works.
+- pi writes compaction summaries outside extension hooks, so a summary isn't capped by a budget.
+- Other clients (e.g. Open WebUI) don't run this extension.
 
 ## Development
 
@@ -205,14 +235,9 @@ npm run check     # typecheck + unit tests
 ```
 
 To add a kind of server: an entry in `src/core/engines.ts`, an adapter in `src/adapters/` and one line in
-`src/adapters/index.ts`. [docs/ADAPTERS.md](docs/ADAPTERS.md) explains what an adapter reports.
-
-## Limits
-
-- pi applies its own settings (budgets, reserve, keep recent) after `/reload`, not instantly.
-- Thinking budgets are per level and the same for every model; that's how pi's setting works.
-- pi writes compaction summaries outside extension hooks, so a summary isn't capped by a budget.
-- Other clients (e.g. Open WebUI) don't run this extension.
+`src/adapters/index.ts`. [docs/ADAPTERS.md](docs/ADAPTERS.md) explains what an adapter reports,
+[docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) the design, [docs/TESTING.md](docs/TESTING.md) the tests, and
+[AGENT_INSTALL.md](AGENT_INSTALL.md) what an AI agent installing it does.
 
 ## Credits
 

@@ -4,6 +4,7 @@
 import type { ExtensionAPI, ProviderModelConfig } from "@earendil-works/pi-coding-agent";
 import { duplicateEndpoints, type EngineRow } from "../core/config.ts";
 import { askServer, modelEntries, originOf, piLiteral, type ModelEntry, type ServerAnswer } from "../core/discover.ts";
+import { log } from "./log.ts";
 import { fetchJson } from "./store.ts";
 import type { Runtime } from "./runtime.ts";
 
@@ -24,6 +25,7 @@ export function offered(entries: Iterable<ModelEntry>): ModelEntry[] {
 export async function runDiscovery(pi: ExtensionAPI, rt: Runtime): Promise<DiscoveryReport> {
 	const rows = rt.config.engines.filter((r) => r.enabled);
 	const answers = await Promise.all(rows.map((row) => askServer(row, fetchJson, rt.config.discovery.timeoutMs)));
+	for (const a of answers) log("discovery", `${a.row.name} (${a.origin}): ${a.error ? `not answering: ${a.error}` : `${a.models.length} models`}`);
 	const catalog = new Map<string, ModelEntry>();
 	const errors = new Map<string, string>();
 	const registered = new Set<string>();

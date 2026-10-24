@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import { isObject } from "../core/config.ts";
 import { menuValuePaths, writePath, type SettingPath } from "../core/pisettings.ts";
+import { log } from "./log.ts";
 import { saveJson } from "./store.ts";
 
 export function piSettingsPath(): string {
@@ -33,6 +34,7 @@ export function writePiSetting(path: SettingPath, value: number | undefined, fil
 	if ("error" in current) return `${current.error}; nothing was changed`;
 	try {
 		saveJson(file, writePath(current.settings, path, value));
+		log("pi-settings", `${path.join(".")} = ${value ?? "pi's default"}`);
 		return undefined;
 	} catch (e) {
 		return `could not write ${file}: ${(e as Error).message}`;

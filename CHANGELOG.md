@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.2 — 2026-10-24
+
+- **modelctl's files live in their own folder,** `~/.pi/agent/pi-modelctl/`. An existing `~/.pi/agent/modelctl.json`
+  moves there by itself the next time pi starts.
+- **A debug log:** start pi with `PI_MODELCTL_DEBUG=1` and `~/.pi/agent/pi-modelctl/debug.log` records the servers
+  asked (address, answer, time), the files written and pi's values changed. Never API keys.
+- **AGENT_INSTALL.md:** what an AI agent installing (or removing) it for someone checks, asks and writes.
+- The README has Requirements and Troubleshooting sections.
+- Development: docs/HOW-IT-WORKS.md and docs/TESTING.md; the integration test reads a git-ignored `.env`.
+
 ## 0.1.1 — 2026-10-24
 
 - **Remove everything** in the menu's new DANGER section (also `/modelctl remove`), before uninstalling: deletes
