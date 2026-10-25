@@ -12,9 +12,10 @@
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import type { Component } from "@earendil-works/pi-tui";
 import { freeProviderName, PROVIDER_NAME, renameProvider, setModelSetting, SUMMARY_LEVELS, summaryLevelFor, type SummaryLevel } from "../../core/config.ts";
+import { summaryRoom, summaryThinkingFit } from "../../core/compaction.ts";
 import { ENGINE_CATALOG, engineInfo, type EngineId } from "../../core/engines.ts";
 import { fmtTokens } from "../../core/format.ts";
-import { levelName, SUMMARY_LEVEL_HELP, SUMMARY_LEVEL_TEXT, thinkingText } from "../../core/labels.ts";
+import { levelName, SUMMARY_LEVEL_HELP, SUMMARY_LEVEL_TEXT, summaryFitWarning, thinkingText } from "../../core/labels.ts";
 import { availablePiLevels, thinkingFromSetting, type PiLevel } from "../../core/levels.ts";
 import {
 	BUDGET_LEVELS,
@@ -355,7 +356,8 @@ export function showPanel(ctx: ExtensionCommandContext, host: PanelHost): Promis
 			const keep = compactionValue(settings, "keepRecentTokens", e.key).value;
 			const at = Math.max(0, e.contextWindow - reserve);
 			const warn = keep >= at ? " Keep recent is at least that much, so a compaction can't free anything: lower it, or the reserve." : "";
-			return ` On ${e.model.id} (${n(e.contextWindow)}): compacts at ${n(at)} used, keeps the newest ${n(keep)}.${warn}`;
+			const fit = e.def ? summaryFitWarning(e.thinking, summaryThinkingFit(e.thinking, summaryLevelFor(rt.config, e.key), summaryRoom(reserve, keep, e.def.maxTokens), !!e.adapter.budgetField)) : undefined;
+			return ` On ${e.model.id} (${n(e.contextWindow)}): compacts at ${n(at)} used, keeps the newest ${n(keep)}.${warn}${fit ? ` ${fit}` : ""}`;
 		};
 
 		function compactionPage(): void {

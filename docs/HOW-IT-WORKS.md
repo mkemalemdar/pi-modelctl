@@ -49,6 +49,13 @@ pi decides when and how to compact; modelctl edits pi's reserve and keep-recent 
 through `compaction.modelOverrides`). The **summary thinking level** is modelctl's: when it isn't "same as the chat",
 modelctl writes the summary with pi's own `compact()` at that level (`src/pi/compaction.ts`).
 
+pi sends no thinking budgets with a summary request, so pi-ai caps the summary's thinking at its default budget for
+the level (`src/core/compaction.ts`: `summaryBudget`). At pi's usual compaction point the output room is about
+reserve + keep recent − 4,096 (pi-ai's `CONTEXT_SAFETY_TOKENS`), at most the model's output limit, and pi-ai keeps
+1,024 of it for the answer (`MIN_ANSWER_TOKENS`). `summaryThinkingFit` compares the two, and the menu and
+`/modelctl show` warn when a summary may think more than fits. A summary modelctl wrote carries `summaryLevel` in
+its compaction details; the debug log names, for every compaction, who wrote the summary at which level.
+
 ## Files
 
 - `~/.pi/agent/pi-modelctl/modelctl.json`: private (600; it can hold API keys), written atomically (a temporary file

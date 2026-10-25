@@ -4,9 +4,11 @@
 // /modelctl remove   Remove everything (before uninstalling), without the menu
 
 import type { ExtensionAPI, ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { summaryLevelFor } from "../core/config.ts";
+import { summaryRoom, summaryThinkingFit } from "../core/compaction.ts";
+import { type SummaryLevel, summaryLevelFor } from "../core/config.ts";
+import type { ModelEntry } from "../core/discover.ts";
 import { fmtExact } from "../core/format.ts";
-import { SUMMARY_LEVEL_TEXT, thinkingText } from "../core/labels.ts";
+import { SUMMARY_LEVEL_TEXT, summaryFitWarning, thinkingText } from "../core/labels.ts";
 import { compactionValue, thinkingBudget } from "../core/pisettings.ts";
 import type { DiscoveryReport } from "./discovery.ts";
 import { readPiSettings, writePiSetting } from "./pi-settings.ts";
@@ -101,7 +103,7 @@ export function showText(pi: ExtensionAPI, rt: Runtime, ctx: ExtensionContext): 
 			`  input          ${e.def.input.join(" + ")}`,
 			`  thinking       ${thinkingText(e.thinking)}`,
 			`  budget         ${budget === undefined ? "none sent" : `${fmtExact(budget)} at ${pi.getThinkingLevel()} (${e.adapter.budgetField})`}`,
-			`  summary level  ${SUMMARY_LEVEL_TEXT[summaryLevelFor(rt.config, e.key)]}`,
+			`  summary level  ${SUMMARY_LEVEL_TEXT[summaryLevelFor(rt.config, e.key)]}${fitNote(e, summaryLevelFor(rt.config, e.key), reserve.value, keep.value)}`,
 			`  reserve        ${fmtExact(reserve.value)} (${reserve.source})`,
 			`  keep recent    ${fmtExact(keep.value)} (${keep.source})`,
 		);
@@ -110,6 +112,13 @@ export function showText(pi: ExtensionAPI, rt: Runtime, ctx: ExtensionContext): 
 	if ("error" in piFile) lines.push("", `pi's settings: ${piFile.error}`);
 	if (rt.warnings.length) lines.push("", "Problems in modelctl.json (those values were ignored):", ...rt.warnings.map((w) => `  ${w}`));
 	return lines.join("\n");
+}
+
+/** The summary-thinking warning for `/modelctl show`, on its own indented line, or nothing when summaries fit. */
+function fitNote(e: ModelEntry, level: SummaryLevel, reserve: number, keep: number): string {
+	if (!e.def) return "";
+	const warning = summaryFitWarning(e.thinking, summaryThinkingFit(e.thinking, level, summaryRoom(reserve, keep, e.def.maxTokens), !!e.adapter.budgetField));
+	return warning ? `\n  ⚠ ${warning}` : "";
 }
 
 function say(ctx: ExtensionContext, text: string, level: "info" | "warning" | "error" = "info"): void {

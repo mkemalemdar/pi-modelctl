@@ -21,10 +21,10 @@ const MODELS: Record<string, DiscoveredModel[]> = {
 	ollama: [{ id: "mystery:1b", input: ["text"], thinking: { kind: "onoff", canTurnOff: true, onLevel: "medium", source: "server metadata" } }],
 };
 
-function setup(opts: { serversOn?: boolean; selected?: string } = {}) {
+function setup(opts: { serversOn?: boolean; selected?: string; piSettings?: Record<string, unknown> } = {}) {
 	const on = opts.serversOn ?? true;
 	const rt = new Runtime(normalizeConfig({ engines: [{ engine: "llama-swap", enabled: on, port: 8080 }, { engine: "ollama", enabled: on }] }), []);
-	let piFile: Record<string, unknown> = {};
+	let piFile: Record<string, unknown> = opts.piSettings ?? {};
 	const rediscover = async () => {
 		rt.catalog.clear();
 		for (const row of rt.config.engines.filter((r) => r.enabled)) {
@@ -158,7 +158,9 @@ test("a 20K model: pi's defaults compact at 4,096 and keep 20,000; per-model val
 	p.press(KEY.enter);
 	assert.deepEqual(p.piFile(), { compaction: { modelOverrides: { "llama-swap/small-model": { reserveTokens: 4000, keepRecentTokens: 5000 } } } });
 	assert.match(p.screen(), /Keep recent\s+saved · applies after Reload/);
-	assert.match(p.flat(), /small-model on llama-swap\. On small-model \(20,480\): compacts at 16,480 used, keeps the newest 5,000\. \[MODEL\]/, "the note follows the new values");
+	assert.match(p.flat(), /small-model on llama-swap\. On small-model \(20,480\): compacts at 16,480 used, keeps the newest 5,000\. /, "the note follows the new values");
+	// These values leave about 4,904 tokens at compaction: too little for a summary thinking at on (medium, 8,192).
+	assert.match(p.flat(), /keeps the newest 5,000\. Summaries follow the chat's level: with thinking on they may think up to 8,192 tokens/);
 	p.press(KEY.up, KEY.down);
 	assert.match(p.screen(), /Reserve tokens\s+4,000 · own · after Reload/);
 	p.open("Reserve tokens");
@@ -278,4 +280,17 @@ test("DANGER › Remove everything: Cancel (the default) and Esc go back; each r
 	q.open("Remove everything…");
 	q.open("Remove modelctl.json and reset pi's values set here");
 	assert.deepEqual(q.result(), { remove: true, resetPi: true });
+});
+
+test("a model whose summaries may think more than the room at compaction says so on its page", async () => {
+	// The small on/off model (20K) with a small reserve and keep recent, as one might set for it.
+	const p = setup({ selected: "llama-swap/small-model", piSettings: { compaction: { modelOverrides: { "llama-swap/small-model": { reserveTokens: 4000, keepRecentTokens: 5000 } } } } });
+	await p.settle();
+	p.open("small-model");
+	assert.match(p.flat(), /Summaries follow the chat's level: with thinking on they may think up to 8,192 tokens, but only about 4,904 tokens are free when pi compacts/);
+	// With the summary level off it fits, and the warning is gone.
+	p.rt.config.summaryLevel = "off";
+	p.press(KEY.esc);
+	p.open("small-model");
+	assert.doesNotMatch(p.flat(), /may think up to/);
 });

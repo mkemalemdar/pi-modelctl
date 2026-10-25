@@ -68,7 +68,8 @@ pi has one thinking budget per reasoning level, the same for every model: minima
 and high 16,384 tokens by default (xhigh and max use high). modelctl tells pi which field each server reads, and pi
 sends the budget for the current level, always keeping 1,024 tokens for the answer. Change the budgets under
 **Thinking budgets**. On a server without a budget field (Ollama, generic), thinking can't be capped; the model's
-page says so.
+page says so. These budgets are for the chat: a compaction summary gets pi's default budget for its level instead
+(see [Compaction](#compaction)).
 
 Checked on llama.cpp (via llama-swap) with Qwen 3.8 27B, a model that thinks very long: the budget stops the thinking, the model still answers,
 and it overrides a `--reasoning-budget` set on the server.
@@ -86,6 +87,14 @@ level:
   16,500 and keep the newest 5,000.
 - **Summary thinking level:** the level the summary is written at: same as the chat (the default; modelctl stays
   out of it), lowest that thinks, off, low, medium or high. A model without that level uses the nearest one it has.
+- **A summary's thinking budget:** pi sends no budgets with a summary request, so its thinking is capped at pi's
+  default for the summary's level (low 2,048, medium 8,192, high 16,384; an on/off model thinks at medium), not at
+  the menu's budgets. When pi compacts at its usual point, about reserve + keep recent − 4,096 tokens are free for
+  the thinking and the summary together, and pi keeps 1,024 of them for the summary. When a summary may think more
+  than that, the model's page (and `/modelctl show`) warns. The 20K example above is one: with thinking on, set its
+  summary level to off.
+- The compaction record notes the level modelctl wrote a summary at (`summaryLevel` in its details), and the debug
+  log names, for every compaction, who wrote the summary at which level.
 
 ### Status line
 
@@ -217,7 +226,8 @@ ignored; the file is only written when you change something in the menu. Before 
 
 - pi applies its own settings (budgets, reserve, keep recent) after `/reload`, not instantly.
 - Thinking budgets are per level and the same for every model; that's how pi's setting works.
-- pi writes compaction summaries outside extension hooks, so a summary isn't capped by a budget.
+- A compaction summary's thinking is capped by pi's default budget for its level, not by the budgets set in the
+  menu: pi sends no budgets with summary requests.
 - Other clients (e.g. Open WebUI) don't run this extension.
 
 ## Development

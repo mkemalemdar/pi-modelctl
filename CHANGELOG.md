@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.3 — 2026-10-25
+
+- **A warning when a summary may think more than there's room for:** pi caps a compaction summary's thinking at
+  its default budget for the summary's level (the menu's budgets don't apply to summaries). When that may not fit
+  the room left when pi compacts, the model's page, the Compaction page and `/modelctl show` say so, with what to
+  change (e.g. a 20K on/off model with a small reserve: summary level off).
+- **The summary's level is recorded:** a compaction modelctl wrote has `summaryLevel` in its details, and the debug
+  log names, for every compaction, who wrote the summary at which level.
+- The README says correctly how summaries are capped (it said they weren't capped at all).
+
 ## 0.1.2 — 2026-10-24
 
 - **modelctl's files live in their own folder,** `~/.pi/agent/pi-modelctl/`. An existing `~/.pi/agent/modelctl.json`
